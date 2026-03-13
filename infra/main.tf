@@ -6,12 +6,12 @@
 module "vpc" {
   source = "./modules/vpc"
 
-  project          = var.project
-  vpc_cidr         = var.vpc_cidr
-  public_subnet_a  = var.public_subnet_a
-  public_subnet_b  = var.public_subnet_b
-  az_a             = var.az_a
-  az_b             = var.az_b
+  project         = var.project
+  vpc_cidr        = var.vpc_cidr
+  public_subnet_a = var.public_subnet_a
+  public_subnet_b = var.public_subnet_b
+  az_a            = var.az_a
+  az_b            = var.az_b
 }
 # -------------------------
 # ECR Repository
@@ -68,8 +68,8 @@ module "ecs" {
   alb_security_group = module.alb.alb_security_group
   container_port     = var.container_port
   desired_count      = 1
-  db_password_arn = module.parameter_store.db_password_arn
-  api_key_arn     = module.parameter_store.api_key_arn
+  db_password_arn    = module.parameter_store.db_password_arn
+  api_key_arn        = module.parameter_store.api_key_arn
 }
 
 # -------------------------

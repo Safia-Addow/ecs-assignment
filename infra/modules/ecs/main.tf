@@ -311,8 +311,8 @@ resource "aws_iam_role_policy" "ecs_task_ssm_exec" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "ssmmessages:CreateControlChannel",
           "ssmmessages:CreateDataChannel",
           "ssmmessages:OpenControlChannel",
@@ -323,8 +323,8 @@ resource "aws_iam_role_policy" "ecs_task_ssm_exec" {
         Resource = "*"
       },
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "secretsmanager:GetSecretValue",
           "ssm:GetParameter",
           "ssm:GetParameters"
