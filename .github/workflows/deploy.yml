@@ -1,119 +1,138 @@
-name: ECS Deploy Pipeline
+name: ECS Deploy
 
+# Trigger on push to main or manual trigger
 on:
   push:
-    branches: [ main ]
-
+    branches:
+      - main
   workflow_dispatch:
 
-permissions:
-  id-token: write
-  contents: read
-
-env:
-  AWS_REGION: eu-west-2
-  ECR_REPOSITORY: ecs-assignment
-  IMAGE_TAG: ${{ github.sha }}
-
 jobs:
-
-  terraform-checks:
+  setup:
+    name: Setup
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: infra
-
+    outputs:
+      sha: ${{ steps.commit_sha.outputs.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-      - uses: hashicorp/setup-terraform@v3
+      - name: Get commit SHA
+        id: commit_sha
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Terraform Format
-        run: terraform fmt -check
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
 
-      - name: Terraform Init
-        run: terraform init
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.7.0
 
-      - name: Terraform Validate
-        run: terraform validate
-
-      - name: Install TFLint
+      - name: Install tflint
         run: |
           curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+          tflint --version
 
-      - name: Run TFLint
-        run: tflint
-
-
-  build:
+  lint:
+    name: Terraform Lint & Validate
     runs-on: ubuntu-latest
-    needs: terraform-checks
-
+    needs: setup
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-oidc-role
-          aws-region: ${{ secrets.AWS_REGION }}
+          terraform_version: 1.7.0
 
-      - name: Login to ECR
-        run: |
-          aws ecr get-login-password --region $AWS_REGION |
-          docker login --username AWS --password-stdin \
-          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com
+      - name: Terraform fmt check
+        run: terraform fmt -check
 
-      - name: Build Docker Image
-        run: |
-          docker build -t $ECR_REPOSITORY:$IMAGE_TAG ./app
-
-      - name: Tag Image
-        run: |
-          docker tag $ECR_REPOSITORY:$IMAGE_TAG \
-          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
-
-      - name: Push Image
-        run: |
-          docker push \
-          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
-
-
-  terraform-deploy:
-    runs-on: ubuntu-latest
-    needs: build
-
-    defaults:
-      run:
-        working-directory: infra
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-oidc-role
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Init
+      - name: Terraform init
         run: terraform init
 
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: TFLint
+        run: tflint
+
+  build-and-push:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: setup
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::769278709379:role/github-oidc-role
+          aws-region: eu-west-2
+
+      - name: Login to ECR
+        id: login-ecr
+        run: |
+          aws ecr get-login-password --region eu-west-2 | \
+          docker login --username AWS --password-stdin 769278709379.dkr.ecr.eu-west-2.amazonaws.com
+
+      - name: Build Docker image
+        run: |
+          docker build -t 769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment:${{ needs.setup.outputs.sha }} ./app
+
+      - name: Push Docker image
+        run: |
+          docker push 769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment:${{ needs.setup.outputs.sha }}
+
+  terraform-deploy:
+    name: Terraform Deploy
+    runs-on: ubuntu-latest
+    needs: [lint, build-and-push]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::769278709379:role/github-oidc-role
+          aws-region: eu-west-2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.7.0
+
+      - name: Terraform Init
+        run: terraform init -backend-config="bucket=ecs-assignment-tf-state-769278709379" -backend-config="region=eu-west-2"
+
       - name: Terraform Plan
-        run: terraform plan
+        run: terraform plan -out=tfplan
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve tfplan
 
-
-  health-check:
+  post-deploy:
+    name: Post-Deploy Check
     runs-on: ubuntu-latest
     needs: terraform-deploy
-
     steps:
-      - name: Check service health
+      - name: Check application health
         run: |
-          curl -f https://tm.${{ secrets.DOMAIN_NAME }}/health
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://tm.ecs.safiaaddow.uk/health)
+          if [ "$STATUS" != "200" ]; then
+            echo "Application is not healthy!"
+            exit 1
+          else
+            echo "Application is healthy!"
+          fi
