@@ -36,9 +36,7 @@ resource "aws_iam_role" "github_actions_role" {
     ]
   })
 }
-
 ## this ressource allows to Attach Permissions to the Role
-
 resource "aws_iam_role_policy_attachment" "github_admin" {
   role       = aws_iam_role.github_actions_role.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
