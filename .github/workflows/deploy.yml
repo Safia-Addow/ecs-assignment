@@ -89,7 +89,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t 769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment:${{ needs.setup.outputs.sha }} ./app
+          docker build -t 769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment:${{ needs.setup.outputs.sha }} .
 
       - name: Push Docker image
         run: |
