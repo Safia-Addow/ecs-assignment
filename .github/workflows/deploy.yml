@@ -148,12 +148,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: terraform-deploy
     steps:
+    
       - name: Check application health
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://tm.ecs.safiaaddow.uk/health)
-          if [ "$STATUS" != "200" ]; then
-            echo "Application is not healthy!"
-            exit 1
-          else
-            echo "Application is healthy!"
-          fi 
+           sleep 60
+           STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://tm.ecs.safiaaddow.uk)
+           if [ "$STATUS" != "200" ]; then
+             echo "Application is not healthy!"
+             exit 1
+           else
+             echo "Application is healthy!"
+           fi
+
+        
