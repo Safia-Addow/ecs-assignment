@@ -62,6 +62,7 @@ module "ecs" {
   project            = var.project
   region             = var.region
   image_url          = module.ecr.repository_url
+  image_tag = var.image_tag   
   vpc_id             = module.vpc.vpc_id
   public_subnets     = module.vpc.public_subnets
   target_group_arn   = module.alb.target_group_arn

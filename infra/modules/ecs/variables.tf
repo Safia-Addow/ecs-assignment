@@ -46,3 +46,8 @@ variable "db_password_arn" {
 variable "api_key_arn" {
   type = string
 }
+
+variable "image_tag" {
+  description = "Docker image tag"
+  type        = string
+}

@@ -75,3 +75,8 @@ variable "github_repo" {
   type        = string
   default ="Safia-Addow/ecs-assignment"
 }
+
+variable "image_tag" {
+  description = "Docker image tag from CI/CD"
+  type        = string
+}
