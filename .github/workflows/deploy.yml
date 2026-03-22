@@ -15,7 +15,7 @@ jobs:
     concurrency:
       group: terraform
       cancel-in-progress: true
-      
+
     outputs:
       sha: ${{ steps.commit_sha.outputs.sha }}
     steps:
@@ -135,8 +135,10 @@ jobs:
 
       - name: Terraform Plan
         working-directory : infra
-        run: terraform plan -out=tfplan
-        
+        run: |
+          terraform plan -lock-timeout=60s -out=tfplan || \
+          (echo "Retrying..." && sleep 10 && terraform plan -lock-timeout=60s -out=tfplan)
+
       - name: Terraform Apply
         working-directory : infra
         run: terraform apply -auto-approve tfplan
@@ -154,4 +156,4 @@ jobs:
             exit 1
           else
             echo "Application is healthy!"
-          fi
+          fi 
