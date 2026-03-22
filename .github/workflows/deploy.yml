@@ -111,6 +111,13 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::769278709379:role/github-oidc-role
           aws-region: eu-west-2
+# 3. Create tfvars file 👈 ADD IT HERE
+      - name: Create tfvars file
+        run: |
+          cat <<EOF > infra/terraform.tfvars
+          api_key="${{ secrets.API_KEY }}"
+          db_password="${{ secrets.DB_PASSWORD }}"
+          EOF
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
@@ -124,11 +131,11 @@ jobs:
       - name: Terraform Plan
         working-directory : infra
         run: terraform plan -out=tfplan
-
+        
       - name: Terraform Apply
         working-directory : infra
         run: terraform apply -auto-approve tfplan
-
+        
   post-deploy:
     name: Post-Deploy Check
     runs-on: ubuntu-latest
