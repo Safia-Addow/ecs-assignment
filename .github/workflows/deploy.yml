@@ -11,6 +11,11 @@ jobs:
   setup:
     name: Setup
     runs-on: ubuntu-latest
+    
+    concurrency:
+      group: terraform
+      cancel-in-progress: true
+      
     outputs:
       sha: ${{ steps.commit_sha.outputs.sha }}
     steps:
