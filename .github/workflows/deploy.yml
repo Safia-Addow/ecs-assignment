@@ -118,12 +118,15 @@ jobs:
           terraform_version: 1.7.0
 
       - name: Terraform Init
+        working-directory : infra     
         run: terraform init -backend-config="bucket=ecs-assignment-tf-state-769278709379" -backend-config="region=eu-west-2"
 
       - name: Terraform Plan
+        working-directory : infra
         run: terraform plan -out=tfplan
 
       - name: Terraform Apply
+        working-directory : infra
         run: terraform apply -auto-approve tfplan
 
   post-deploy:
