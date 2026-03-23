@@ -168,4 +168,5 @@ jobs:
              exit 1
            else
              echo "Application is healthy!"
-           fi
+           fi  
+           
