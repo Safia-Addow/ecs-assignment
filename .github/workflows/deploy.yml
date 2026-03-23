@@ -57,6 +57,12 @@ jobs:
       - name: Install tflint
         run: |
           curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+     
+      - name: Configure AWS credentials via OIDC
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: arn:aws:iam::769278709379:role/github-oidc-role
+        aws-region: eu-west-2
 
       - name: Terraform fmt
         run: terraform -chdir=infra fmt
