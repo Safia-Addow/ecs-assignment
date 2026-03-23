@@ -1,4 +1,6 @@
 terraform {
+  required_version = ">= 1.7.0"
+
   backend "s3" {
 
     bucket         = "ecs-assignment-tf-state-769278709379"
