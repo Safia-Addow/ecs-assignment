@@ -110,13 +110,13 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            -t 769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment:${{ needs.setup.outputs.sha }} \
+            -t 769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment:${{ github.sha }} \
             .
 
       - name: Push Docker image
         run: |
           docker push \
-            769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment:${{ needs.setup.outputs.sha }}
+            769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment:${{ github.sha }}
 
   terraform-deploy:
     name: Terraform Deploy
@@ -142,7 +142,7 @@ jobs:
           cat <<EOF > infra/terraform.tfvars
           api_key="${{ secrets.API_KEY }}"
           db_password="${{ secrets.DB_PASSWORD }}"
-          image_tag="${{ needs.setup.outputs.sha }}"
+          image_tag="${{ github.sha }}"
           EOF
 
       - name: Setup Terraform
@@ -159,7 +159,7 @@ jobs:
           until [ $ATTEMPTS -ge 3 ]
           do
             terraform -chdir=infra plan \
-              -var="image_tag=${{ needs.setup.outputs.sha }}" \
+              -var="image_tag=${{ github.sha }}" \
               -lock-timeout=60s \
               -out=tfplan && break
             ATTEMPTS=$((ATTEMPTS+1))
@@ -193,3 +193,5 @@ jobs:
           else
             echo "Application is healthy!"
           fi
+
+          
