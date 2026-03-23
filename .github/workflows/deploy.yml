@@ -10,13 +10,14 @@ jobs:
   setup:
     name: Setup
     runs-on: ubuntu-latest
-    
+
     concurrency:
       group: terraform
       cancel-in-progress: true
 
     outputs:
       sha: ${{ steps.set_sha.outputs.sha }}
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -44,6 +45,7 @@ jobs:
     name: Terraform Lint & Validate
     runs-on: ubuntu-latest
     needs: setup
+
     steps:
       - uses: actions/checkout@v3
 
@@ -51,30 +53,32 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.7.0
-      
+
       - name: Install tflint
         run: |
           curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
-               
+
       - name: Terraform fmt check
-        run: terraform fmt -check
+        run: terraform -chdir=infra fmt -check
 
       - name: Terraform init
-        run: terraform init
+        run: terraform -chdir=infra init
 
       - name: Terraform validate
-        run: terraform validate
+        run: terraform -chdir=infra validate
 
       - name: TFLint
-        run: tflint
+        run: tflint --chdir=infra
 
   build-and-push:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
     needs: setup
+
     permissions:
       id-token: write
       contents: read
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -86,26 +90,30 @@ jobs:
           aws-region: eu-west-2
 
       - name: Login to ECR
-        id: login-ecr
         run: |
           aws ecr get-login-password --region eu-west-2 | \
           docker login --username AWS --password-stdin 769278709379.dkr.ecr.eu-west-2.amazonaws.com
 
       - name: Build Docker image
         run: |
-          docker build -t 769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment:${{ steps.set_sha.outputs.sha }} .
+          docker build \
+            -t 769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment:${{ needs.setup.outputs.sha }} \
+            .
 
       - name: Push Docker image
         run: |
-          docker push 769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment:${{ steps.set_sha.outputs.sha }}
+          docker push \
+            769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment:${{ needs.setup.outputs.sha }}
 
   terraform-deploy:
     name: Terraform Deploy
     runs-on: ubuntu-latest
     needs: [lint, build-and-push]
+
     permissions:
       id-token: write
       contents: read
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -116,13 +124,12 @@ jobs:
           role-to-assume: arn:aws:iam::769278709379:role/github-oidc-role
           aws-region: eu-west-2
 
-      # --- Step: Create tfvars file for Option 2 ---
       - name: Create tfvars file
         run: |
           cat <<EOF > infra/terraform.tfvars
           api_key="${{ secrets.API_KEY }}"
           db_password="${{ secrets.DB_PASSWORD }}"
-          image_tag="${{ needs.build-and-push.outputs.sha }}"
+          image_tag="${{ needs.setup.outputs.sha }}"
           EOF
 
       - name: Setup Terraform
@@ -131,16 +138,17 @@ jobs:
           terraform_version: 1.7.0
 
       - name: Terraform Init
-        working-directory: infra
-        run: terraform init -backend-config="bucket=ecs-assignment-tf-state-769278709379" -backend-config="region=eu-west-2"
+        run: terraform -chdir=infra init -backend-config="bucket=ecs-assignment-tf-state-769278709379" -backend-config="region=eu-west-2"
 
-      - name: Terraform Plan
-        working-directory: infra
+      - name: Terraform Plan (with retry)
         run: |
           ATTEMPTS=0
           until [ $ATTEMPTS -ge 3 ]
           do
-            terraform plan -var="image_tag=${{ needs.build-and-push.outputs.sha }}" -lock-timeout=60s -out=tfplan && break
+            terraform -chdir=infra plan \
+              -var="image_tag=${{ needs.setup.outputs.sha }}" \
+              -lock-timeout=60s \
+              -out=tfplan && break
             ATTEMPTS=$((ATTEMPTS+1))
             echo "Retrying Terraform plan in 10s..."
             sleep 10
@@ -151,22 +159,24 @@ jobs:
           fi
 
       - name: Terraform Apply
-        working-directory: infra
-        run: terraform apply -auto-approve tfplan
+        run: terraform -chdir=infra apply -auto-approve tfplan
 
   post-deploy:
     name: Post-Deploy Check
     runs-on: ubuntu-latest
     needs: terraform-deploy
+
     steps:
       - name: Check application health
         run: |
-           sleep 60
-           STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://tm.ecs.safiaaddow.uk/health)
-           if [ "$STATUS" != "200" ]; then
-             echo "Application is not healthy!"
-             exit 1
-           else
-             echo "Application is healthy!"
-           fi  
-           
+          echo "Waiting for service to stabilize..."
+          sleep 60
+
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://tm.ecs.safiaaddow.uk/health)
+
+          if [ "$STATUS" != "200" ]; then
+            echo "Application is not healthy! Status: $STATUS"
+            exit 1
+          else
+            echo "Application is healthy!"
+          fi
