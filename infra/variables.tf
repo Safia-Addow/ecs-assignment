@@ -80,3 +80,15 @@ variable "image_tag" {
   description = "Docker image tag from CI/CD"
   type        = string
 }
+
+variable api{
+
+}
+
+variable as{
+
+}
+
+variable image_url {
+  
+} 
