@@ -81,6 +81,8 @@ variable "image_tag" {
   type        = string
 }
 
-variable "image_url" {
-  type = string
+/*variable "image_url" {
+  description = "image url used for the tag"
+  type        = string
 }
+*/
