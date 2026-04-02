@@ -16,16 +16,30 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/20"
 }
 
+variable "private_subnet_a" {
+  description = "CIDR block for private subnet "
+  type        = string
+  default     = "10.0.8.0/22"
+}
+
+variable "private_subnet_b" {
+  description = "CIDR block for private subnet "
+  type        = string
+  default     = "10.0.12.0/22"
+}
+
 variable "public_subnet_a" {
   description = "CIDR block for public subnet A"
   type        = string
-  default     = "10.0.0.0/22"
+  default     = "10.0.0.0/22 public subnet B"
+  
 }
 
 variable "public_subnet_b" {
-  description = "CIDR block for public subnet B"
+  description = "CIDR block for public subnet A"
   type        = string
-  default     = "10.0.4.0/22"
+  default     = "10.0.4.0/22 public subnet B"
+  
 }
 
 variable "az_a" {
@@ -80,6 +94,10 @@ variable "image_tag" {
   description = "Docker image tag from CI/CD"
   type        = string
 }
+
+
+
+
 
 /*variable "image_url" {
   description = "image url used for the tag"

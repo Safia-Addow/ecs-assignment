@@ -18,7 +18,6 @@ This project demonstrates a complete CI/CD pipeline for deploying a React applic
 <img width="1162" height="690" alt="image" src="https://github.com/user-attachments/assets/c621f84e-dee7-4662-a7a0-30e3f508543d" />
 
 
-
 ```mermaid
 graph TD
 

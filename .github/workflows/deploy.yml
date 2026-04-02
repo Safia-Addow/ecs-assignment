@@ -143,6 +143,7 @@ jobs:
           api_key="${{ secrets.API_KEY }}"
           db_password="${{ secrets.DB_PASSWORD }}"
           image_tag="${{ github.sha }}"
+          image_url="769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment"
           EOF
 
       - name: Setup Terraform
@@ -171,6 +172,15 @@ jobs:
             exit 1
           fi
 
+       # 👇 ADD THIS DEBUG STEP RIGHT HERE
+      - name: Debug image values
+        run: |
+          echo "----- DEBUG IMAGE VALUES -----"
+          echo "IMAGE_TAG=${{ github.sha }}"
+          echo "EXPECTED IMAGE_URL=769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment"
+          echo "FINAL IMAGE=769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment:${{ github.sha }}"
+          echo "--------------------------------"     
+
       - name: Terraform Apply
         run: terraform -chdir=infra apply -auto-approve tfplan
 
@@ -188,7 +198,7 @@ jobs:
            MAX_ATTEMPTS=10
 
            while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
-             STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://tm.ecs.safiaaddow.uk/)
+             STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://tm.ecs.safiaaddow.uk/health)
   
              if [ "$STATUS" = "200" ]; then
               echo "Application is healthy!"
