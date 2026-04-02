@@ -81,14 +81,6 @@ variable "image_tag" {
   type        = string
 }
 
-variable api{
-
+variable "image_url" {
+  type = string
 }
-
-variable as{
-
-}
-
-variable image_url {
-  
-} 
