@@ -15,9 +15,54 @@ This project demonstrates a complete CI/CD pipeline for deploying a React applic
 
 ## 🏗️ Architecture Diagram
 
-<img width="1162" height="690" alt="image" src="https://github.com/user-attachments/assets/c621f84e-dee7-4662-a7a0-30e3f508543d" />
+```mermaid
+flowchart TB
 
+%% CI/CD
+subgraph CICD["CI/CD Pipeline"]
+    GH["GitHub (Code Push)"]
+    CI["GitHub Actions"]
+    BUILD["Docker Build & Push"]
+    TF["Terraform"]
+    
+    GH --> CI --> BUILD --> TF
+end
 
+%% AWS
+subgraph AWS["AWS (eu-west-2)"]
+
+    subgraph VPC["VPC (10.0.0.0/20)"]
+
+        subgraph PUB["Public Subnets (2 AZs)"]
+            IGW["Internet Gateway"]
+            ALB["Application Load Balancer"]
+            NAT["NAT Gateway"]
+        end
+
+        subgraph PRIV["Private Subnets (2 AZs)"]
+            ECS["ECS Cluster (Fargate Service)"]
+        end
+
+    end
+
+    ECR["Amazon ECR"]
+    CW["CloudWatch Logs"]
+    SSM["SSM Parameter Store"]
+    ACM["ACM SSL Certificate"]
+
+end
+
+%% FLOW
+User --> IGW --> ALB --> ECS
+
+ECS --> NAT --> ECR
+ECS --> CW
+ECS --> SSM
+
+TF --> VPC
+TF --> ECS
+TF --> ALB
+TF --> ECR
 ```mermaid
 graph TD
 
