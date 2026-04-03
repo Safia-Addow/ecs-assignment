@@ -17,53 +17,68 @@ This project demonstrates a complete CI/CD pipeline for deploying a React applic
 ```mermaid
 flowchart TB
 
-%% CI/CD
+%% =========================
+%% CI/CD PIPELINE
+%% =========================
 subgraph CICD["CI/CD Pipeline"]
-    GH["GitHub (Code Push)"]
-    CI["GitHub Actions"]
-    BUILD["Docker Build & Push"]
-    TF["Terraform"]
-    
-    GH --> CI --> BUILD --> TF
+    GH["GitHub Repo"]
+    ACTIONS["GitHub Actions"]
+    BUILD["Docker Build"]
+    PUSH["Push to Amazon ECR"]
+    TF["Terraform Apply"]
+
+    GH --> ACTIONS --> BUILD --> PUSH --> TF
 end
 
-%% AWS
-subgraph AWS["AWS (eu-west-2)"]
+%% =========================
+%% AWS REGION
+%% =========================
+subgraph AWS["AWS Region (eu-west-2)"]
 
+    %% VPC
     subgraph VPC["VPC (10.0.0.0/20)"]
 
-        subgraph PUB["Public Subnets (2 AZs)"]
+        %% PUBLIC
+        subgraph PUBLIC["Public Subnets (Multi-AZ)"]
             IGW["Internet Gateway"]
             ALB["Application Load Balancer"]
             NAT["NAT Gateway"]
         end
 
-        subgraph PRIV["Private Subnets (2 AZs)"]
-            ECS["ECS Cluster (Fargate Service)"]
+        %% PRIVATE
+        subgraph PRIVATE["Private Subnets (Multi-AZ)"]
+            ECS["ECS Cluster (Fargate)"]
         end
 
     end
 
+    %% SERVICES
     ECR["Amazon ECR"]
     CW["CloudWatch Logs"]
     SSM["SSM Parameter Store"]
-    ACM["ACM SSL Certificate"]
+    ACM["AWS ACM (SSL)"]
 
 end
 
-%% FLOW
-User --> IGW --> ALB --> ECS
+%% =========================
+%% TRAFFIC FLOW
+%% =========================
 
+User["User / Browser"] --> IGW --> ALB --> ECS
+
+%% Outbound from ECS
 ECS --> NAT --> ECR
 ECS --> CW
 ECS --> SSM
 
+%% CI/CD Integration
+PUSH --> ECR
 TF --> VPC
 TF --> ECS
 TF --> ALB
-TF --> ECR
-## 🧩 Architecture Components
 
+%% TLS
+ACM --> ALB
 ### 🌐 VPC
 
 * Custom Virtual Private Cloud
