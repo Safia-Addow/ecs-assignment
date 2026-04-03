@@ -21,9 +21,9 @@ variable "private_subnets" {
    type = list(string)
 }
 
-variable "public_subnets" {
-  type = list(string)
-}
+#variable "public_subnets" {
+#  type = list(string)
+#}
 
 variable "target_group_arn" {
   type = string
@@ -54,4 +54,5 @@ variable "api_key_arn" {
 variable "image_tag" {
   description = "Docker image tag"
   type        = string
+
 }

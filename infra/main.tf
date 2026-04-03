@@ -8,6 +8,8 @@ module "vpc" {
 
   project         = var.project
   vpc_cidr        = var.vpc_cidr
+  private_subnet_a = var.private_subnet_a
+  private_subnet_b = var.private_subnet_b
   public_subnet_a = var.public_subnet_a
   public_subnet_b = var.public_subnet_b
   az_a            = var.az_a
@@ -64,7 +66,7 @@ module "ecs" {
   image_url          = module.ecr.repository_url
   image_tag          = var.image_tag
   vpc_id             = module.vpc.vpc_id
-  public_subnets     = module.vpc.public_subnets
+  private_subnets    = module.vpc.private_subnets
   target_group_arn   = module.alb.target_group_arn
   alb_security_group = module.alb.alb_security_group
   container_port     = var.container_port

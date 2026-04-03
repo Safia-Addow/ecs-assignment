@@ -66,6 +66,7 @@ variable "subdomain" {
   default     = "tm"
 }
 
+
 variable "container_port" {
   description = "Port the container listens on"
   type        = number
@@ -96,8 +97,9 @@ variable "image_tag" {
 }
 
 
-
-
+variable "private_subnets" {
+   type = list(string)
+}
 
 /*variable "image_url" {
   description = "image url used for the tag"
