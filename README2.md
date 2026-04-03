@@ -76,12 +76,13 @@ PUSH --> ECR
 TF --> VPC
 TF --> ECS
 TF --> ALB
-
 🧠 Architecture Explanation (Interview Ready)
+
 🌐 VPC (Virtual Private Cloud)
 Custom VPC providing network isolation
 CIDR block: 10.0.0.0/20
 Spans multiple Availability Zones for high availability
+
 📦 Subnets
 Type	Purpose
 Public Subnets	Host ALB, NAT Gateway
