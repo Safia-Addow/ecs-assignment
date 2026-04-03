@@ -31,14 +31,14 @@ variable "private_subnet_b" {
 variable "public_subnet_a" {
   description = "CIDR block for public subnet A"
   type        = string
-  default     = "10.0.0.0/22 public subnet B"
+  default     = "10.0.0.0/22"
   
 }
 
 variable "public_subnet_b" {
   description = "CIDR block for public subnet A"
   type        = string
-  default     = "10.0.4.0/22 public subnet B"
+  default     = "10.0.4.0/22" 
   
 }
 
@@ -97,8 +97,8 @@ variable "image_tag" {
 }
 
 
-/*variable "image_url" {
+variable "image_url" {
   description = "image url used for the tag"
   type        = string
 }
-*/
+
