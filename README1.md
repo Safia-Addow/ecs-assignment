@@ -14,44 +14,71 @@ This project demonstrates a complete CI/CD pipeline for deploying a React applic
 ---
 
 ## 🏗️ Architecture Diagram
-
-<img width="1162" height="690" alt="image" src="https://github.com/user-attachments/assets/c621f84e-dee7-4662-a7a0-30e3f508543d" />
-
-
 ```mermaid
-graph TD
+flowchart TB
 
-User -->|HTTPS| ALB
+%% =========================
+%% CI/CD PIPELINE
+%% =========================
+subgraph CICD["CI/CD Pipeline"]
+    GH["GitHub Repo"]
+    ACTIONS["GitHub Actions"]
+    BUILD["Docker Build"]
+    PUSH["Push to Amazon ECR"]
+    TF["Terraform Apply"]
 
-subgraph AWS Cloud
+    GH --> ACTIONS --> BUILD --> PUSH --> TF
+end
 
-  subgraph VPC
+%% =========================
+%% AWS REGION
+%% =========================
+subgraph AWS["AWS Region (eu-west-2)"]
 
-    subgraph Public Subnet
-      ALB
+    %% VPC
+    subgraph VPC["VPC (10.0.0.0/20)"]
+
+        %% PUBLIC
+        subgraph PUBLIC["Public Subnets (Multi-AZ)"]
+            IGW["Internet Gateway"]
+            ALB["Application Load Balancer"]
+            NAT["NAT Gateway"]
+        end
+
+        %% PRIVATE
+        subgraph PRIVATE["Private Subnets (Multi-AZ)"]
+            ECS["ECS Cluster (Fargate)"]
+        end
+
     end
 
-    subgraph Private Subnet
-      ECS[ECS Fargate Tasks]
-    end
-
-  end
-
-  ECS -->|Pull Image| ECR
-  ALB -->|Health Check| ECS
+    %% SERVICES
+    ECR["Amazon ECR"]
+    CW["CloudWatch Logs"]
+    SSM["SSM Parameter Store"]
+    ACM["AWS ACM (SSL)"]
 
 end
 
-ACM -->|TLS Certificate| ALB
+%% =========================
+%% TRAFFIC FLOW
+%% =========================
 
-GitHub -->|CI/CD Pipeline| ECR
-GitHub -->|Terraform Deploy| AWS Cloud
-```
+User["User / Browser"] --> IGW --> ALB --> ECS
 
----
+%% Outbound from ECS
+ECS --> NAT --> ECR
+ECS --> CW
+ECS --> SSM
 
-## 🧩 Architecture Components
+%% CI/CD Integration
+PUSH --> ECR
+TF --> VPC
+TF --> ECS
+TF --> ALB
 
+%% TLS
+ACM --> ALB
 ### 🌐 VPC
 
 * Custom Virtual Private Cloud
