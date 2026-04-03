@@ -8,16 +8,16 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      id-token: write   # 👈 REQUIRED for OIDC
+      id-token: write
       contents: read
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # ✅ ADD THIS STEP HERE
+      # ✅ ADD THIS
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: arn:aws:iam::769278709379:role/github-oidc-role
           aws-region: eu-west-2
@@ -25,14 +25,10 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # (optional debug)
-      - name: Debug AWS identity
-        run: aws sts get-caller-identity
-
       - name: Terraform Init
         run: terraform init
         working-directory: infra
 
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
-        working-directory: infra 
+        working-directory: infra
