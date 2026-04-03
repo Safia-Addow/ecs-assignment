@@ -97,8 +97,10 @@ variable "image_tag" {
 }
 
 
-variable "image_url" {
+/*variable "image_url" {
   description = "image url used for the tag"
   type        = string
-}
+}*/
+
+
 
