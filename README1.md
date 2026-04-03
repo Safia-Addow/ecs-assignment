@@ -14,7 +14,6 @@ This project demonstrates a complete CI/CD pipeline for deploying a React applic
 ---
 
 ## 🏗️ Architecture Diagram
-
 ```mermaid
 flowchart TB
 
@@ -63,38 +62,6 @@ TF --> VPC
 TF --> ECS
 TF --> ALB
 TF --> ECR
-```mermaid
-graph TD
-
-User -->|HTTPS| ALB
-
-subgraph AWS Cloud
-
-  subgraph VPC
-
-    subgraph Public Subnet
-      ALB
-    end
-
-    subgraph Private Subnet
-      ECS[ECS Fargate Tasks]
-    end
-
-  end
-
-  ECS -->|Pull Image| ECR
-  ALB -->|Health Check| ECS
-
-end
-
-ACM -->|TLS Certificate| ALB
-
-GitHub -->|CI/CD Pipeline| ECR
-GitHub -->|Terraform Deploy| AWS Cloud
-```
-
----
-
 ## 🧩 Architecture Components
 
 ### 🌐 VPC
