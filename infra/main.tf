@@ -75,7 +75,7 @@ module "ecs" {
   api_key_arn        = module.parameter_store.api_key_arn
 }
 
-# -------------------------
+# ---------------------------
 # -------------------------
 # Route53 DNS Record → ALB
 # -------------------------
