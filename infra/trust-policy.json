@@ -9,7 +9,7 @@
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
         "StringLike": {
-          "token.actions.githubusercontent.com:sub": "repo:YOUR_USERNAME/YOUR_REPO:*"
+          "token.actions.githubusercontent.com:sub": "repo:safia-Addow/ecs-assignment:*"
         }
       }
     }
