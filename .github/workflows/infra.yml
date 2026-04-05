@@ -1,0 +1,36 @@
+name: Infra Provision
+
+on:
+  workflow_dispatch:
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::769278709379:role/github-oidc-role
+          aws-region: eu-west-2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Init
+        run: |
+          terraform -chdir=infra init \
+            -backend-config="bucket=ecs-assignment-tf-state-769278709379" \
+            -backend-config="region=eu-west-2"
+
+      - name: Terraform Apply (Infra only)
+        run: |
+          terraform -chdir=infra apply -auto-approve \
+            -var="image_tag=bootstrap"
