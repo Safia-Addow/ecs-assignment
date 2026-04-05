@@ -2,8 +2,8 @@ name: Infra Provision
 
 on:
   push:
-     branches:
-       - main
+    branches:
+      - main
 
 jobs:
   terraform:
@@ -31,12 +31,10 @@ jobs:
           terraform -chdir=infra init \
             -backend-config="bucket=ecs-assignment-tf-state-769278709379" \
             -backend-config="region=eu-west-2"
-    env:
-      TF_VAR_api_key: ${{ secrets.API_KEY }}
 
       - name: Terraform Apply (Infra only)
+        env:
+          TF_VAR_api_key: ${{ secrets.API_KEY }}
         run: |
           terraform -chdir=infra apply -auto-approve \
             -var="image_tag=bootstrap"
-            
-           ## -var="api_key=${{ secrets.API_KEY }}"
