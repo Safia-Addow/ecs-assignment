@@ -2,8 +2,8 @@ name: Infra Provision
 
 on:
   workflow_dispatch:
-  branches:
-      - main
+     branches:
+       - main
 
 jobs:
   terraform:
