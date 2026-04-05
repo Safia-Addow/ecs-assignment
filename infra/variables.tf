@@ -76,7 +76,7 @@ variable "container_port" {
 variable "db_password" {
   description = "Database password"
   type        = string
-  sensitive   = true
+  default= "example"
 }
 
 variable "api_key" {
