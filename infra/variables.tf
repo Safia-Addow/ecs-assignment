@@ -32,14 +32,14 @@ variable "public_subnet_a" {
   description = "CIDR block for public subnet A"
   type        = string
   default     = "10.0.0.0/22"
-  
+
 }
 
 variable "public_subnet_b" {
   description = "CIDR block for public subnet A"
   type        = string
-  default     = "10.0.4.0/22" 
-  
+  default     = "10.0.4.0/22"
+
 }
 
 variable "az_a" {
