@@ -1,0 +1,42 @@
+name: Build & Push to ECR
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::769278709379:role/github-oidc-role
+          aws-region: eu-west-2
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region eu-west-2 | \
+          docker login --username AWS --password-stdin 769278709379.dkr.ecr.eu-west-2.amazonaws.com
+
+      - name: Build Image
+        run: |
+          docker build -t ecs-assignment:${{ github.sha }} .
+
+      - name: Tag Image
+        run: |
+          docker tag ecs-assignment:${{ github.sha }} \
+          769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment:${{ github.sha }}
+
+      - name: Push Image
+        run: |
+          docker push 769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment:${{ github.sha }}
