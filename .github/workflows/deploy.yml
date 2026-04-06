@@ -4,6 +4,10 @@ on:
  workflow_dispatch:
     branches:
       - main
+      
+concurrency:
+  group: terraform
+  cancel-in-progress: false
 
 jobs:
   deploy:
