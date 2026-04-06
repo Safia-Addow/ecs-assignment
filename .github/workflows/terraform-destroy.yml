@@ -2,9 +2,14 @@ name: Terraform Destroy
 
 on:
   workflow_dispatch:
-    branches:
-      - main
+    inputs:
+      confirm:
+        description: "Type 'destroy' to confirm"
+        required: true
   
+concurrency:
+  group: terraform
+  cancel-in-progress: false
 
 jobs:
   destroy:
@@ -15,23 +20,32 @@ jobs:
       contents: read
 
     steps:
+      - name: Validate confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "destroy" ]; then
+            echo "Destroy cancelled"
+            exit 1
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # ✅ ADD THIS
-      - name: Configure AWS credentials
+      - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: arn:aws:iam::769278709379:role/github-oidc-role
           aws-region: eu-west-2
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v2
 
       - name: Terraform Init
-        run: terraform init
-        working-directory: infra
+        run: |
+          terraform -chdir=infra init \
+            -backend-config="bucket=ecs-assignment-tf-state-769278709379" \
+            -backend-config="region=eu-west-2"
 
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve
-        working-directory: infra
+        run: |
+          terraform -chdir=infra destroy -auto-approve \
+            -var="image_tag=destroy"
