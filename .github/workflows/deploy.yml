@@ -63,6 +63,10 @@ jobs:
       - name: Terraform Init
         run: terraform -chdir=infra init
 
+    env:
+        TF_VAR_api_key: ${{ secrets.API_KEY }}
+        TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+
       - name: Terraform Apply (Update ECS)
         run: |
           terraform -chdir=infra apply -auto-approve \
