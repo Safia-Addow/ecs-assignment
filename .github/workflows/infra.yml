@@ -27,7 +27,6 @@ jobs:
       TF_VAR_db_password: "test456"
 
     steps:
-    steps:
       - name: Debug API key
         run: |
           echo "Value: $TF_VAR_api_key"
@@ -37,7 +36,7 @@ jobs:
           else
             echo "✅ API key is present"
           fi 
-             
+
       - name: Checkout
         uses: actions/checkout@v3
 
