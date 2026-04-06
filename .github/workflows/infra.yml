@@ -44,3 +44,4 @@ jobs:
         run: |
           terraform -chdir=infra apply -auto-approve \
             -var="image_tag=bootstrap"
+              
