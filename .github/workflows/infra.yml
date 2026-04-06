@@ -26,7 +26,18 @@ jobs:
       TF_VAR_api_key: "test123"   # ← HARD CODED TEST
       TF_VAR_db_password: "test456"
 
-    steps:    
+    steps:
+    steps:
+      - name: Debug API key
+        run: |
+          echo "Value: $TF_VAR_api_key"
+          if [ -z "$TF_VAR_api_key" ]; then
+            echo "❌ API key is EMPTY"
+            exit 1
+          else
+            echo "✅ API key is present"
+          fi 
+             
       - name: Checkout
         uses: actions/checkout@v3
 
