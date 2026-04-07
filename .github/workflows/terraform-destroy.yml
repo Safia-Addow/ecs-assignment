@@ -35,6 +35,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+ # 👇 ADD DEBUG STEP HERE
+      - name: Debug GitHub Context
+        run: |
+          echo "REPO=$GITHUB_REPOSITORY"
+          echo "REF=$GITHUB_REF"
+          
       # ✅ Configure AWS with longer session (prevents expiry)
       - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v2
