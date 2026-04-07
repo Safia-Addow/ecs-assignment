@@ -9,7 +9,7 @@
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
         "StringLike": {
-          "token.actions.githubusercontent.com:sub": "repo:Safia-Addow/ecs-assignment:*"
+          "token.actions.githubusercontent.com:sub": "repo:Safia-Addow/ecs-assignment:ref:refs/heads/main"
         },
         "StringEquals": {
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
