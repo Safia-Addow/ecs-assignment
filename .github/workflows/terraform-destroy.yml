@@ -1,20 +1,19 @@
 name: Terraform Destroy
 
 on:
-workflow_dispatch:
-inputs:
-confirm:
-description: "Type 'destroy' to confirm"
-required: true
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type 'destroy' to confirm"
+        required: true
 
 concurrency:
-group: terraform
-cancel-in-progress: false
+  group: terraform
+  cancel-in-progress: false
 
 jobs:
-destroy:
-runs-on: ubuntu-latest
-
+  destroy:
+    runs-on: ubuntu-latest
 ```
 permissions:
   contents: read
