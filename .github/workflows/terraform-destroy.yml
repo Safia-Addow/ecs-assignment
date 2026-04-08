@@ -14,79 +14,89 @@ concurrency:
 jobs:
   destroy:
     runs-on: ubuntu-latest
-```
-permissions:
-  contents: read
 
-env:
-  TF_VAR_api_key: ${{ secrets.API_KEY }}
-  TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+    permissions:
+      contents: read
 
-steps:
-  - name: Validate confirmation
-    run: |
-      if [ "${{ github.event.inputs.confirm }}" != "destroy" ]; then
-        echo "❌ Destroy cancelled"
-        exit 1
-      fi
+    env:
+      TF_VAR_api_key: ${{ secrets.API_KEY }}
+      TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
 
-  - name: Checkout code
-    uses: actions/checkout@v3
+    steps:
+      # ✅ Safety check
+      - name: Validate confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "destroy" ]; then
+            echo "❌ Destroy cancelled"
+            exit 1
+          fi
 
-  - name: Debug GitHub Context
-    run: |
-      echo "REPO=$GITHUB_REPOSITORY"
-      echo "REF=$GITHUB_REF"
+      # ✅ Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-  - name: Configure AWS Credentials
-    uses: aws-actions/configure-aws-credentials@v4
-    with:
-      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      aws-region: eu-west-2
+      # ✅ Debug
+      - name: Debug GitHub Context
+        run: |
+          echo "REPO=$GITHUB_REPOSITORY"
+          echo "REF=$GITHUB_REF"
 
-  - name: Setup Terraform
-    uses: hashicorp/setup-terraform@v2
+      # ✅ AWS Credentials (static keys)
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-2
 
-  - name: Terraform Init
-    run: |
-      terraform -chdir=infra init \
-        -backend-config="bucket=ecs-assignment-tf-state-769278709379" \
-        -backend-config="region=eu-west-2"
+      # ✅ Setup Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
 
-  - name: Validate variables
-    run: |
-      if [ -z "$TF_VAR_api_key" ]; then
-        echo "❌ API key missing"
-        exit 1
-      fi
+      # ✅ Terraform Init
+      - name: Terraform Init
+        run: |
+          terraform -chdir=infra init \
+            -backend-config="bucket=ecs-assignment-tf-state-769278709379" \
+            -backend-config="region=eu-west-2"
 
-  - name: Backup current state
-    run: |
-      terraform -chdir=infra state pull > infra/pre-destroy.tfstate
+      # ✅ Validate variables
+      - name: Validate variables
+        run: |
+          if [ -z "$TF_VAR_api_key" ]; then
+            echo "❌ API key missing"
+            exit 1
+          fi
 
-  - name: Terraform Destroy (with retry)
-    run: |
-      terraform -chdir=infra destroy -auto-approve \
-        -var="image_tag=destroy" \
-      || (
-        echo "⚠️ Retry destroy after 15s..."
-        sleep 15
-        terraform -chdir=infra destroy -auto-approve \
-          -var="image_tag=destroy"
-      )
+      # ✅ Backup state
+      - name: Backup current state
+        run: |
+          terraform -chdir=infra state pull > infra/pre-destroy.tfstate
 
-  - name: Upload Terraform state backup
-    if: always()
-    uses: actions/upload-artifact@v4
-    with:
-      name: terraform-state-backup
-      path: infra/*.tfstate
+      # ✅ Destroy with retry
+      - name: Terraform Destroy (with retry)
+        run: |
+          terraform -chdir=infra destroy -auto-approve \
+            -var="image_tag=destroy" \
+          || (
+            echo "⚠️ Retry destroy after 15s..."
+            sleep 15
+            terraform -chdir=infra destroy -auto-approve \
+              -var="image_tag=destroy"
+          )
 
-  - name: Upload errored state (if exists)
-    if: failure()
-    uses: actions/upload-artifact@v4
-    with:
-      name: errored-tfstate
-      path: infra/errored.tfstate
-```
+      # ✅ Upload state backup
+      - name: Upload Terraform state backup
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-state-backup
+          path: infra/*.tfstate
+
+      # ✅ Upload errored state
+      - name: Upload errored state (if exists)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: errored-tfstate
+          path: infra/errored.tfstate
