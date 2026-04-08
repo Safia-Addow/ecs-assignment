@@ -11,9 +11,9 @@ resource "aws_iam_openid_connect_provider" "github" {
   ]
 
   # 🛡️ Prevent CI/CD from breaking itself
- # lifecycle {
-   # prevent_destroy = true
- # }
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 ## IAM Role assumed by GitHub Actions
@@ -42,9 +42,9 @@ resource "aws_iam_role" "github_actions_role" {
   })
 
   # 🛡️ Prevent accidental deletion
-  #lifecycle {
-   # prevent_destroy = true
- # }
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 ## Attach admin permissions to the role
