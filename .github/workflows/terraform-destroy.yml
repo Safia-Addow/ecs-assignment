@@ -1,102 +1,104 @@
 name: Terraform Destroy
 
 on:
-  workflow_dispatch:
-    inputs:
-      confirm:
-        description: "Type 'destroy' to confirm"
-        required: true
+workflow_dispatch:
+inputs:
+confirm:
+description: "Type 'destroy' to confirm"
+required: true
 
 concurrency:
-  group: terraform
-  cancel-in-progress: false
+group: terraform
+cancel-in-progress: false
 
 jobs:
-  destroy:
-    runs-on: ubuntu-latest
+destroy:
+runs-on: ubuntu-latest
 
-    permissions:
-      id-token: write
-      contents: read
+```
+# ❌ REMOVE OIDC permissions
+permissions:
+  contents: read
 
-    env:
-      TF_VAR_api_key: ${{ secrets.API_KEY }}
-      TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+env:
+  TF_VAR_api_key: ${{ secrets.API_KEY }}
+  TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
 
-    steps:
-      # ✅ Safety check
-      - name: Validate confirmation
-        run: |
-          if [ "${{ github.event.inputs.confirm }}" != "destroy" ]; then
-            echo "❌ Destroy cancelled"
-            exit 1
-          fi
+steps:
+  # ✅ Safety check
+  - name: Validate confirmation
+    run: |
+      if [ "${{ github.event.inputs.confirm }}" != "destroy" ]; then
+        echo "❌ Destroy cancelled"
+        exit 1
+      fi
 
-      - name: Checkout code
-        uses: actions/checkout@v3
+  - name: Checkout code
+    uses: actions/checkout@v3
 
- # 👇 ADD DEBUG STEP HERE
-      - name: Debug GitHub Context
-        run: |
-          echo "REPO=$GITHUB_REPOSITORY"
-          echo "REF=$GITHUB_REF"
-          
-      # ✅ Configure AWS with longer session (prevents expiry)
-      - name: Configure AWS
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: arn:aws:iam::769278709379:role/github-oidc-role
-          aws-region: eu-west-2
-          role-duration-seconds: 3600   # ⬅️ prevents token expiry
+  # ✅ Debug
+  - name: Debug GitHub Context
+    run: |
+      echo "REPO=$GITHUB_REPOSITORY"
+      echo "REF=$GITHUB_REF"
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+  # ✅ NEW: Static AWS Credentials (REPLACES OIDC)
+  - name: Configure AWS Credentials
+    uses: aws-actions/configure-aws-credentials@v4
+    with:
+      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      aws-region: eu-west-2
 
-      # ✅ Init
-      - name: Terraform Init
-        run: |
-          terraform -chdir=infra init \
-            -backend-config="bucket=ecs-assignment-tf-state-769278709379" \
-            -backend-config="region=eu-west-2"
+  - name: Setup Terraform
+    uses: hashicorp/setup-terraform@v2
 
-      # ✅ Validate variables before running (prevents hangs)
-      - name: Validate variables
-        run: |
-          if [ -z "$TF_VAR_api_key" ]; then
-            echo "❌ API key missing"
-            exit 1
-          fi
+  # ✅ Init
+  - name: Terraform Init
+    run: |
+      terraform -chdir=infra init \
+        -backend-config="bucket=ecs-assignment-tf-state-769278709379" \
+        -backend-config="region=eu-west-2"
 
-      # ✅ Backup current remote state BEFORE destroy
-      - name: Backup current state
-        run: |
-          terraform -chdir=infra state pull > infra/pre-destroy.tfstate
+  # ✅ Validate variables
+  - name: Validate variables
+    run: |
+      if [ -z "$TF_VAR_api_key" ]; then
+        echo "❌ API key missing"
+        exit 1
+      fi
 
-      # ✅ Destroy with retry (handles lock / transient AWS issues)
-      - name: Terraform Destroy (with retry)
-        run: |
-          terraform -chdir=infra destroy -auto-approve \
-            -var="image_tag=destroy" \
-          || (
-            echo "⚠️ Retry destroy after 15s..."
-            sleep 15
-            terraform -chdir=infra destroy -auto-approve \
-              -var="image_tag=destroy"
-          )
+  # ✅ Backup current remote state
+  - name: Backup current state
+    run: |
+      terraform -chdir=infra state pull > infra/pre-destroy.tfstate
 
-      # ✅ Always backup resulting state (SUCCESS or FAILURE)
-      - name: Upload Terraform state backup
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-state-backup
-          path: |
-            infra/*.tfstate
+  # ✅ Destroy with retry
+  - name: Terraform Destroy (with retry)
+    run: |
+      terraform -chdir=infra destroy -auto-approve \
+        -var="image_tag=destroy" \
+      || (
+        echo "⚠️ Retry destroy after 15s..."
+        sleep 15
+        terraform -chdir=infra destroy -auto-approve \
+          -var="image_tag=destroy"
+      )
 
-      # ✅ Capture errored state explicitly (critical recovery)
-      - name: Upload errored state (if exists)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: errored-tfstate
-          path: infra/errored.tfstate
+  # ✅ Upload state backup
+  - name: Upload Terraform state backup
+    if: always()
+    uses: actions/upload-artifact@v4
+    with:
+      name: terraform-state-backup
+      path: |
+        infra/*.tfstate
+
+  # ✅ Upload errored state
+  - name: Upload errored state (if exists)
+    if: failure()
+    uses: actions/upload-artifact@v4
+    with:
+      name: errored-tfstate
+      path: infra/errored.tfstate
+```
