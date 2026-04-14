@@ -1,4 +1,4 @@
-name: Infra Provision
+name: terraform apply
 
 on:
  workflow_dispatch:

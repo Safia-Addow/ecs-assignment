@@ -10,6 +10,9 @@ dist/
 *.tfstate
 *.tfstate.*
 *.tfvars
+*.zip
+*.deb
+*.swp
 
 # environment variables
 .env
