@@ -1,214 +1,169 @@
-# 🚀 ECS Deployment with Terraform, GitHub Actions & Docker
+# 🚀 AWS ECS Deployment with Terraform (DevOps Project)
 
 ## 📌 Overview
 
-This project demonstrates a complete CI/CD pipeline for deploying a React application to AWS using:
+This project demonstrates the deployment of a containerised application using **Amazon ECS (Elastic Container Service - Fargate)** with **Terraform** for Infrastructure as Code (IaC). It provisions and configures core AWS services including **Amazon ECR**, **Amazon S3**, networking, and ECS resources.
 
-* Docker
-* Amazon ECR
-* Amazon ECS (Fargate)
-* Application Load Balancer (ALB)
-* Terraform (Infrastructure as Code)
-* GitHub Actions (CI/CD)
+The solution showcases modern DevOps practices such as automated infrastructure provisioning, container orchestration, and cloud-native deployment using a scalable, serverless architecture.
 
 ---
 
-## 🏗️ Architecture Diagram
-```mermaid
-flowchart TB
+## 🏗️ Architecture
 
-%% =========================
-%% CI/CD PIPELINE
-%% =========================
-subgraph CICD["CI/CD Pipeline"]
-    GH["GitHub Repo"]
-    ACTIONS["GitHub Actions"]
-    BUILD["Docker Build"]
-    PUSH["Push to Amazon ECR"]
-    TF["Terraform Apply"]
+The system consists of:
 
-    GH --> ACTIONS --> BUILD --> PUSH --> TF
-end
-
-%% =========================
-%% AWS REGION
-%% =========================
-subgraph AWS["AWS Region (eu-west-2)"]
-
-    %% VPC
-    subgraph VPC["VPC (10.0.0.0/20)"]
-
-        %% PUBLIC
-        subgraph PUBLIC["Public Subnets (Multi-AZ)"]
-            IGW["Internet Gateway"]
-            ALB["Application Load Balancer"]
-            NAT["NAT Gateway"]
-        end
-
-        %% PRIVATE
-        subgraph PRIVATE["Private Subnets (Multi-AZ)"]
-            ECS["ECS Cluster (Fargate)"]
-        end
-
-    end
-
-    %% SERVICES
-    ECR["Amazon ECR"]
-    CW["CloudWatch Logs"]
-    SSM["SSM Parameter Store"]
-    ACM["AWS ACM (SSL)"]
-
-end
-
-%% =========================
-%% TRAFFIC FLOW
-%% =========================
-
-User["User / Browser"] --> IGW --> ALB --> ECS
-
-%% Outbound from ECS
-ECS --> NAT --> ECR
-ECS --> CW
-ECS --> SSM
-
-%% CI/CD Integration
-PUSH --> ECR
-TF --> VPC
-TF --> ECS
-TF --> ALB
-
-%% TLS
-ACM --> ALB
-### 🌐 VPC
-
-* Custom Virtual Private Cloud
-* Provides network isolation
-
-### 📦 Subnets
-
-* **Public Subnet** → Hosts ALB
-* **Private Subnet** → Hosts ECS tasks
-
-### ⚖️ Application Load Balancer (ALB)
-
-* Routes incoming HTTP/HTTPS traffic
-* Performs health checks
-
-### 🐳 ECS (Fargate)
-
-* Runs containerized React application
-* Serverless container orchestration
-
-### 📦 ECR (Elastic Container Registry)
-
-* Stores Docker images
-* Images tagged with Git commit SHA
-
-### 🔐 ACM (AWS Certificate Manager)
-
-* Provides SSL/TLS certificates
-* Enables HTTPS on ALB
-
-### 🏗️ Terraform
-
-* Provisions all infrastructure
-* Manages state using S3 + DynamoDB locking
-
-### ⚙️ GitHub Actions
-
-* Automates build, push, and deployment
+* **Amazon ECS (Fargate)** – runs containerised applications without managing servers
+* **Amazon ECR** – stores and manages Docker container images
+* **Amazon S3** – stores Terraform remote state securely
+* **IAM Roles** – manage secure access between AWS services
+* **VPC & Networking** – enables secure communication between resources
 
 ---
 
-## 🔄 CI/CD Pipeline Flow
+## 📊 Architecture Diagram
 
-1. Code pushed to `main` branch
-2. GitHub Actions pipeline runs:
-
-   * Lint & validate Terraform
-   * Build Docker image
-   * Push image to ECR
-   * Run Terraform plan & apply
-3. ECS service updates with new image
-4. ALB routes traffic to new healthy tasks
+![ECS Architecture](docs/ecs-architecture.png)
 
 ---
 
-## 🐳 Docker Setup
+## ⚙️ Technologies Used
 
-Multi-stage build:
-
-* Stage 1: Build React app
-* Stage 2: Serve with Nginx
-
----
-
-## ⚙️ Terraform Structure
-
-```
-infra/
- ├── main.tf
- ├── variables.tf
- ├── backend.tf
- └── modules/
-     ├── vpc/
-     ├── alb/
-     ├── ecs/
-     ├── ecr/
-     ├── acm/
-```
+* **AWS ECS (Fargate)**
+* **AWS ECR**
+* **AWS S3**
+* **Terraform**
+* **Docker**
+* **Git & GitHub**
 
 ---
 
-## 🔐 Security
+## 🚀 Features
 
-* IAM Role with OIDC for GitHub Actions
-* Secrets stored in GitHub Secrets
-* Private subnets for ECS tasks
-
----
-
-## 🧪 Health Check
-
-* ALB health check path: `/`
-* CI/CD verifies application via curl
+* Infrastructure as Code using Terraform
+* Bootstrap layer for foundational resources (S3 & ECR)
+* Automated provisioning of AWS infrastructure
+* Container deployment using ECS Fargate
+* Remote Terraform state management
+* Scalable and serverless container architecture
+* Secure IAM-based access control
 
 ---
 
-## 🚀 Deployment Steps
+## 📂 Project Structure
 
 ```bash
-# Build locally
-docker build -t ecs-assignment .
-
-# Run locally
-docker run -p 8080:80 ecs-assignment
-
-# Deploy via GitHub Actions
-
-# Push to main branch
+.
+├── bootstrap/
+│   └── main.tf        # Creates S3 bucket (state) & ECR repository
+├── ecs/
+│   ├── main.tf        # ECS infrastructure and services
+│   ├── variables.tf
+│   └── outputs.tf
+├── app/
+│   └── Dockerfile     # Application container definition
+├── docs/
+│   └── ecs-architecture.png
+└── README.md
 ```
+
+---
+
+## 🔄 Deployment Steps
+
+### 🔹 Prerequisites
+
+* AWS CLI installed and configured
+* Terraform installed
+* Docker installed
+* AWS account with appropriate IAM permissions
+
+---
+
+### 🔹 1. Bootstrap infrastructure (S3 + ECR)
+
+This step provisions foundational resources required for Terraform state and container storage.
+
+```bash
+cd bootstrap
+terraform init
+terraform apply
+```
+
+---
+
+### 🔹 2. Deploy ECS infrastructure
+
+```bash
+cd ../ecs
+terraform init
+terraform apply
+```
+
+---
+
+### 🔹 3. Build and push Docker image
+
+```bash
+docker build -t ecs-app .
+docker tag ecs-app:latest <your-ecr-url>:latest
+docker push <your-ecr-url>:latest
+```
+
+---
+
+## 🧠 DevOps Concepts Demonstrated
+
+* Infrastructure as Code (Terraform)
+* Containerisation using Docker
+* Cloud resource provisioning (AWS)
+* Remote state management using S3
+* Separation of bootstrap and application infrastructure
+* Secure IAM role configuration
+* CI/CD-ready architecture
+
+---
+
+## 🔐 Security Considerations
+
+* IAM roles used instead of hardcoded credentials
+* S3 bucket encryption enabled for Terraform state
+* ECR image scanning enabled on push
+* Principle of least privilege applied across resources
+
+---
+
+## ❗ Challenges & Solutions
+
+**Issue:** Terraform backend requires S3 before initialisation
+**Solution:** Implemented a separate **bootstrap layer** to provision S3 and ECR before deploying main infrastructure
+
+**Issue:** ECS container failed to start
+**Solution:** Fixed IAM execution role and ensured correct ECR image URI was used
+
+**Issue:** Networking issues preventing container access
+**Solution:** Configured correct subnets, security groups, and outbound internet access
+
+**Issue:** Docker image not pulling from ECR
+**Solution:** Verified authentication using `aws ecr get-login-password` and ensured correct repository permissions
+
+**Issue:** Git conflicts during development
+**Solution:** Resolved conflicts using rebase workflow and maintained clean commit history
 
 ---
 
 ## 📈 Future Improvements
 
-* Add autoscaling policies
-* Add monitoring (CloudWatch)
-* Improve security groups
-* Add blue/green deployments
+* Implement CI/CD pipeline using GitHub Actions
+* Add Application Load Balancer for traffic routing
+* Enable auto-scaling for ECS services
+* Integrate CloudWatch logging and monitoring
+* Refactor Terraform into reusable modules
 
 ---
 
-## ✅ Status
+## 👨‍💻 Author
 
-✔ Fully working CI/CD pipeline
-✔ Infrastructure automated with Terraform
-✔ Application deployed on ECS with ALB
-✔ HTTPS enabled via ACM
-
----
-
-## 👤 Author
 Safia Addow
-DevOps Project - ECS Assignment
+DevOps Engineer
+
+---
