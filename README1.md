@@ -20,10 +20,9 @@
    * 7.6 Infrastructure as Code (Terraform)
    * 7.7 CI/CD Automation
 8. DevOps Concepts Demonstrated
-9. Security Considerations
-10. Challenges & Solutions
-11. Future Improvements
-12. Author
+9. Challenges & Solutions
+10. Future Improvements
+
 
 ---
 
@@ -230,16 +229,7 @@ CI/CD pipelines are implemented using GitHub Actions to automate build, deployme
 
 ---
 
-## 9. 🔐 Security Considerations
-
-* IAM roles instead of hardcoded credentials
-* Encrypted S3 backend
-* ECR image scanning enabled
-* Least privilege access
-
----
-
-## 10. ❗ Challenges & Solutions
+## 9. ❗ Challenges & Solutions
 
 **Terraform backend dependency**
 → Solved using bootstrap layer
@@ -258,7 +248,7 @@ CI/CD pipelines are implemented using GitHub Actions to automate build, deployme
 
 ---
 
-## 11. 📈 Future Improvements
+## 10. 📈 Future Improvements
 
 * Blue/Green deployments
 * Auto-scaling
@@ -268,7 +258,7 @@ CI/CD pipelines are implemented using GitHub Actions to automate build, deployme
 
 ---
 
-## 12. 👨‍💻 Author
+## 👨‍💻 Author
 
 Safia Addow
 DevOps Engineer
