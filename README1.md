@@ -121,7 +121,16 @@ docker build -t <image-name> ./app
 docker run -p 8080:80 <image-name>
 curl http://localhost:8080
 ```
+Multi-stage Docker build:
 
+Stage 1: Build React app
+Stage 2: Serve with Nginx
+
+Benefits:
+
+Smaller image size
+Faster deployments
+Production-ready setup
 ---
 
 ### 7.4 🔹 Image Registry (ECR)
