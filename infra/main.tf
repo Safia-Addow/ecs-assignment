@@ -16,12 +16,13 @@ module "vpc" {
   az_b             = var.az_b
 }
 # -------------------------
+
 # ECR Repository
 # -------------------------
-module "ecr" {
-  source  = "./modules/ecr"
-  project = var.project
-}
+#module "ecr" {
+ # source  = "./modules/ecr"
+  #project = var.project
+#}
 
 # -------------------------
 # Route53 Hosted Zone Lookup
