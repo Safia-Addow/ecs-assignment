@@ -64,7 +64,7 @@ module "ecs" {
 
   project            = var.project
   region             = var.region
-  image_url          = module.ecr.repository_url
+  image_url          = "769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment"
   image_tag          = var.image_tag
   vpc_id             = module.vpc.vpc_id
   private_subnets    = module.vpc.private_subnets
