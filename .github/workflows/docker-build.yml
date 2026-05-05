@@ -48,6 +48,7 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
+            -f docker/Dockerfile \
             -t 769278709379.dkr.ecr.eu-west-2.amazonaws.com/ecs-assignment:${{ github.sha }} \
             .
 
