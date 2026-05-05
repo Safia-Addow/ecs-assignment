@@ -1,64 +1,22 @@
-name: Deploy Infrastructure
-
-on:
-  workflow_dispatch:
-
-concurrency:
-  group: terraform
-  cancel-in-progress: false
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     permissions:
-      id-token: write
-      contents: read
+      contents: read   
 
     env:
       TF_VAR_api_key: ${{ secrets.API_KEY }}
       TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
 
     steps:
-      # -------------------------
-      # CHECKOUT
-      # -------------------------
       - name: Checkout
         uses: actions/checkout@v3
 
-      # -------------------------
-      # AWS AUTH
-      # -------------------------
+      
       - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::769278709379:role/github-oidc-role
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-2
-
-      # -------------------------
-      # GET LATEST IMAGE TAG
-      # -------------------------
-      - name: Get latest image tag from ECR
-        id: image
-        run: |
-          IMAGE_TAG=$(aws ecr describe-images \
-            --repository-name ecs-assignment \
-            --region eu-west-2 \
-            --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' \
-            --output text)
-
-          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
-
-      # -------------------------
-      # TERRAFORM
-      # -------------------------
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-
-      - name: Terraform Init
-        run: terraform -chdir=infra init
-
-      - name: Terraform Apply (Deploy ECS)
-        run: |
-          terraform -chdir=infra apply -auto-approve \
-            -var="image_tag=$IMAGE_TAG"
